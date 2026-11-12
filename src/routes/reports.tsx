@@ -1,0 +1,55 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Download, FileJson, FileText, Globe } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { api, reportsQuery } from "@/lib/api/services";
+import { PageHeader, fmtDate } from "@/components/app/ui";
+
+export const Route = createFileRoute("/reports")({
+  head: () => ({
+    meta: [
+      { title: "Reports — AutoPentest AI" },
+      { name: "description", content: "Download executive and technical security assessment reports." },
+      { property: "og:title", content: "Reports — AutoPentest AI" },
+      { property: "og:description", content: "Downloadable security assessment reports." },
+    ],
+  }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(reportsQuery),
+  component: Reports,
+});
+
+const icons = { pdf: FileText, html: Globe, json: FileJson };
+
+function Reports() {
+  const { data } = useSuspenseQuery(reportsQuery);
+  const download = (id: string) => {
+    const url = api.reportDownloadUrl(id);
+    if (url) window.open(url, "_blank");
+    else toast.info("Demo mode", { description: "Connect the FastAPI backend to download real reports." });
+  };
+  return (
+    <>
+      <PageHeader title="Reports" description="Generated after each completed assessment." />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {data.map((r) => {
+          const Icon = icons[r.format];
+          return (
+            <div key={r.id} className="panel flex flex-col p-5">
+              <div className="flex items-start justify-between">
+                <span className="rounded-lg bg-accent p-2.5 text-primary"><Icon className="size-5" /></span>
+                <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs uppercase text-muted-foreground">{r.format}</span>
+              </div>
+              <h3 className="mt-4 font-medium text-foreground">{r.title}</h3>
+              <p className="font-mono text-xs text-muted-foreground">{r.target}</p>
+              <div className="mt-4 flex gap-4 text-xs text-muted-foreground">
+                <span>{r.findings} findings</span><span>{(r.sizeKb / 1024).toFixed(1)} MB</span><span>{fmtDate(r.generatedAt)}</span>
+              </div>
+              <Button variant="outline" className="mt-5" onClick={() => download(r.id)}><Download /> Download</Button>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}

@@ -10,33 +10,129 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnalystRouteImport } from './routes/analyst'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as AssessmentsNewRouteImport } from './routes/assessments.new'
+import { Route as ScansIndexRouteImport } from './routes/scans.index'
+import { Route as ScansScanIdRouteImport } from './routes/scans.$scanId'
+import { Route as VulnerabilitiesIndexRouteImport } from './routes/vulnerabilities.index'
+import { Route as VulnerabilitiesFindingIdRouteImport } from './routes/vulnerabilities.$findingId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalystRoute = AnalystRouteImport.update({
+  id: '/analyst',
+  path: '/analyst',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssessmentsNewRoute = AssessmentsNewRouteImport.update({
+  id: '/assessments/new',
+  path: '/assessments/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScansIndexRoute = ScansIndexRouteImport.update({
+  id: '/scans/',
+  path: '/scans/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScansScanIdRoute = ScansScanIdRouteImport.update({
+  id: '/scans/$scanId',
+  path: '/scans/$scanId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VulnerabilitiesIndexRoute = VulnerabilitiesIndexRouteImport.update({
+  id: '/vulnerabilities/',
+  path: '/vulnerabilities/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VulnerabilitiesFindingIdRoute =
+  VulnerabilitiesFindingIdRouteImport.update({
+    id: '/vulnerabilities/$findingId',
+    path: '/vulnerabilities/$findingId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analyst': typeof AnalystRoute
+  '/reports': typeof ReportsRoute
+  '/assessments/new': typeof AssessmentsNewRoute
+  '/scans/$scanId': typeof ScansScanIdRoute
+  '/vulnerabilities/$findingId': typeof VulnerabilitiesFindingIdRoute
+  '/scans/': typeof ScansIndexRoute
+  '/vulnerabilities/': typeof VulnerabilitiesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analyst': typeof AnalystRoute
+  '/reports': typeof ReportsRoute
+  '/assessments/new': typeof AssessmentsNewRoute
+  '/scans/$scanId': typeof ScansScanIdRoute
+  '/vulnerabilities/$findingId': typeof VulnerabilitiesFindingIdRoute
+  '/scans': typeof ScansIndexRoute
+  '/vulnerabilities': typeof VulnerabilitiesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analyst': typeof AnalystRoute
+  '/reports': typeof ReportsRoute
+  '/assessments/new': typeof AssessmentsNewRoute
+  '/scans/$scanId': typeof ScansScanIdRoute
+  '/vulnerabilities/$findingId': typeof VulnerabilitiesFindingIdRoute
+  '/scans/': typeof ScansIndexRoute
+  '/vulnerabilities/': typeof VulnerabilitiesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/analyst'
+    | '/reports'
+    | '/assessments/new'
+    | '/scans/$scanId'
+    | '/vulnerabilities/$findingId'
+    | '/scans/'
+    | '/vulnerabilities/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/analyst'
+    | '/reports'
+    | '/assessments/new'
+    | '/scans/$scanId'
+    | '/vulnerabilities/$findingId'
+    | '/scans'
+    | '/vulnerabilities'
+  id:
+    | '__root__'
+    | '/'
+    | '/analyst'
+    | '/reports'
+    | '/assessments/new'
+    | '/scans/$scanId'
+    | '/vulnerabilities/$findingId'
+    | '/scans/'
+    | '/vulnerabilities/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalystRoute: typeof AnalystRoute
+  ReportsRoute: typeof ReportsRoute
+  AssessmentsNewRoute: typeof AssessmentsNewRoute
+  ScansScanIdRoute: typeof ScansScanIdRoute
+  VulnerabilitiesFindingIdRoute: typeof VulnerabilitiesFindingIdRoute
+  ScansIndexRoute: typeof ScansIndexRoute
+  VulnerabilitiesIndexRoute: typeof VulnerabilitiesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +144,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analyst': {
+      id: '/analyst'
+      path: '/analyst'
+      fullPath: '/analyst'
+      preLoaderRoute: typeof AnalystRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assessments/new': {
+      id: '/assessments/new'
+      path: '/assessments/new'
+      fullPath: '/assessments/new'
+      preLoaderRoute: typeof AssessmentsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scans/': {
+      id: '/scans/'
+      path: '/scans'
+      fullPath: '/scans/'
+      preLoaderRoute: typeof ScansIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scans/$scanId': {
+      id: '/scans/$scanId'
+      path: '/scans/$scanId'
+      fullPath: '/scans/$scanId'
+      preLoaderRoute: typeof ScansScanIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vulnerabilities/': {
+      id: '/vulnerabilities/'
+      path: '/vulnerabilities'
+      fullPath: '/vulnerabilities/'
+      preLoaderRoute: typeof VulnerabilitiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vulnerabilities/$findingId': {
+      id: '/vulnerabilities/$findingId'
+      path: '/vulnerabilities/$findingId'
+      fullPath: '/vulnerabilities/$findingId'
+      preLoaderRoute: typeof VulnerabilitiesFindingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalystRoute: AnalystRoute,
+  ReportsRoute: ReportsRoute,
+  AssessmentsNewRoute: AssessmentsNewRoute,
+  ScansScanIdRoute: ScansScanIdRoute,
+  VulnerabilitiesFindingIdRoute: VulnerabilitiesFindingIdRoute,
+  ScansIndexRoute: ScansIndexRoute,
+  VulnerabilitiesIndexRoute: VulnerabilitiesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

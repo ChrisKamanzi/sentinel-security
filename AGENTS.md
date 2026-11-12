@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- All backend data goes through `src/lib/api/services.ts` (one function per FastAPI endpoint); components never call `fetch` directly. Why: the scanning engine lives in a separate Python FastAPI service.
+- `VITE_API_BASE_URL` unset = demo mode using `src/lib/api/demo-data.ts`. Why: lets the UI run before the backend exists.
