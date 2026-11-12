@@ -30,14 +30,14 @@ export const api = {
   createAssessment: (input: NewAssessmentInput): Promise<Assessment> => {
     if (!input.authorized) return Promise.reject(new Error("Authorization confirmation is required"));
     return isDemoMode
-      ? delay({ ...demoAssessments[0], name: input.name, target: input.target }, 600)
+      ? delay({ ...demoAssessments[0]!, name: input.name, target: input.target }, 600)
       : apiFetch("/api/assessments", { method: "POST", body: JSON.stringify(input) });
   },
 
   /** GET /api/assessments/{id} — poll for real-time progress */
   getScan: async (id: string): Promise<ScanDetail> => {
     if (!isDemoMode) return apiFetch(`/api/assessments/${id}`);
-    const base = demoAssessments.find((a) => a.id === id) ?? demoAssessments[0];
+    const base = demoAssessments.find((a) => a.id === id) ?? demoAssessments[0]!;
     const a = demoProgress(base);
     const per = 100 / stageTemplate.length;
     const stages = stageTemplate.map((s, i) => ({
@@ -72,7 +72,7 @@ export const api = {
   listReports: (): Promise<Report[]> => (isDemoMode ? delay(demoReports) : apiFetch("/api/reports")),
 
   /** URL for GET /api/reports/{id}/download */
-  reportDownloadUrl: (id: string) => (isDemoMode ? null : `${import.meta.env.VITE_API_BASE_URL}/api/reports/${id}/download`),
+  reportDownloadUrl: (id: string) => (isDemoMode ? null : `${import.meta.env["VITE_API_BASE_URL"]}/api/reports/${id}/download`),
 
   /** POST /api/analyst/chat */
   askAnalyst: async (messages: ChatMessage[], findingId?: string): Promise<ChatMessage> => {

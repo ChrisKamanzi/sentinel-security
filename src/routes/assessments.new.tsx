@@ -114,7 +114,7 @@ function NewAssessment() {
               {useAuth && <Input placeholder="Authorization: Bearer eyJ..." value={authHeader} onChange={(e) => setAuthHeader(e.target.value)} className="font-mono" />}
               <div>
                 <div className="mb-3 flex justify-between"><Label>Max requests per second</Label><span className="font-mono text-sm text-foreground">{maxRps}</span></div>
-                <Slider min={1} max={50} step={1} value={[maxRps]} onValueChange={(v) => setMaxRps(v[0])} />
+                <Slider min={1} max={50} step={1} value={[maxRps]} onValueChange={(v) => setMaxRps(v[0] ?? 10)} />
               </div>
             </div>
           </Panel>

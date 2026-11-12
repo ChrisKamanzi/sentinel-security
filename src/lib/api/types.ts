@@ -77,7 +77,7 @@ export interface NewAssessmentInput {
   authorized: boolean;
   profile: "quick" | "standard" | "deep";
   modules: string[];
-  authHeader?: string;
+  authHeader?: string | undefined;
   maxRps: number;
 }
 

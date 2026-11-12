@@ -9,7 +9,7 @@ import type { ChatMessage } from "@/lib/api/types";
 import { PageHeader } from "@/components/app/ui";
 
 export const Route = createFileRoute("/analyst")({
-  validateSearch: (s: Record<string, unknown>): { finding?: string } => ({ finding: typeof s.finding === "string" ? s.finding : undefined }),
+  validateSearch: (s: Record<string, unknown>): { finding?: string | undefined } => ({ finding: typeof s["finding"] === "string" ? s["finding"] : undefined }),
   head: () => ({
     meta: [
       { title: "AI Security Analyst — AutoPentest AI" },

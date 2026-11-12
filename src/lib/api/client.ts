@@ -3,7 +3,7 @@
  * Set VITE_API_BASE_URL (e.g. https://api.autopentest.ai) to use the real backend.
  * When unset, services fall back to bundled demo data.
  */
-export const API_BASE_URL: string | undefined = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL: string | undefined = import.meta.env["VITE_API_BASE_URL"];
 export const isDemoMode = !API_BASE_URL;
 
 export class ApiError extends Error {
