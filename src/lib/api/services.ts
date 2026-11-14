@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { ApiError, apiFetch, apiUrl, isDemoMode } from "./client";
 import { demoAssessments, demoFindings, demoReports, demoSummary, stageTemplate } from "./demo-data";
-import type { Assessment, ChatMessage, DashboardSummary, Finding, NewAssessmentInput, Report, ScanDetail } from "./types";
+import type { Assessment, ChatMessage, DashboardSummary, Finding, NewAssessmentInput, Report, ScanAnalysis, ScanDetail } from "./types";
 
 /*
  * Service layer for the FastAPI backend. Each function maps to one endpoint.
@@ -84,9 +84,36 @@ export const api = {
   /** URL for GET /reports/{id}/download */
   reportDownloadUrl: (id: string) => (isDemoMode ? null : apiUrl(`/reports/${id}/download`)),
 
-  /** POST /analyst/chat */
-  askAnalyst: async (messages: ChatMessage[], findingId?: string): Promise<ChatMessage> => {
-    if (!isDemoMode) return apiFetch("/analyst/chat", { method: "POST", body: JSON.stringify({ messages, finding_id: findingId }) });
+  /**
+   * Latest AI analysis of an assessment (any status): GET /scans/{id}/analysis.
+   * Resolves to null when the assessment has never been analyzed.
+   */
+  getScanAnalysis: async (scanId: string): Promise<ScanAnalysis | null> => {
+    if (isDemoMode) return null;
+    try {
+      return await apiFetch<ScanAnalysis>(`/scans/${encodeURIComponent(scanId)}/analysis`);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return null;
+      throw e;
+    }
+  },
+
+  /**
+   * Queue a new AI analysis: POST /scans/{id}/analysis (202). Sends the scan's
+   * redacted findings to Anthropic and uses API credits. The backend answers
+   * 409 while the scan runs, when it has no findings, or when a run is active.
+   */
+  startScanAnalysis: (scanId: string): Promise<ScanAnalysis> =>
+    isDemoMode
+      ? Promise.reject(new Error("AI analysis needs the FastAPI backend"))
+      : apiFetch(`/scans/${encodeURIComponent(scanId)}/analysis`, { method: "POST" }),
+
+  /**
+   * Demo-mode chat only. The FastAPI backend has no chat endpoint; with a
+   * backend the analyst page uses getScanAnalysis/startScanAnalysis instead.
+   */
+  askAnalyst: async (messages: ChatMessage[], _findingId?: string): Promise<ChatMessage> => {
+    if (!isDemoMode) throw new Error("Chat is only available in demo mode; use the per-assessment AI analysis");
     const q = messages[messages.length - 1]?.content.toLowerCase() ?? "";
     let content =
       "In your latest assessments, the two critical issues are **SQL injection in transaction search** (VULN-2201) and **broken object-level authorization on accounts** (VULN-2202). Both affect the Payments API and allow access to other customers' data. I'd fix VULN-2202 first — it's trivially exploitable by any logged-in user.";
@@ -102,3 +129,5 @@ export const assessmentsQuery = queryOptions({ queryKey: ["assessments"], queryF
 export const findingsQuery = queryOptions({ queryKey: ["findings"], queryFn: api.listFindings });
 export const findingQuery = (id: string) => queryOptions({ queryKey: ["finding", id], queryFn: () => api.getFinding(id) });
 export const reportsQuery = queryOptions({ queryKey: ["reports"], queryFn: api.listReports });
+export const scanAnalysisQuery = (scanId: string) =>
+  queryOptions({ queryKey: ["analysis", scanId], queryFn: () => api.getScanAnalysis(scanId) });

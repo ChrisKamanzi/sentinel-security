@@ -89,18 +89,25 @@ describe("service layer paths", () => {
       modules: [],
       maxRps: 5,
     });
-    await api.askAnalyst([{ role: "user", content: "hi" }]);
+    await api.getScanAnalysis("s1");
+    await api.startScanAnalysis("s1");
+    // No chat endpoint exists on the backend: the demo chat must not call one.
+    await expect(api.askAnalyst([{ role: "user", content: "hi" }])).rejects.toThrow("demo mode");
 
-    const urls = fetchMock.mock.calls.map((call) => String((call as unknown[])[0]));
-    expect(urls).toEqual([
-      "/api/v1/dashboard/summary",
-      "/api/v1/assessments",
-      "/api/v1/assessments/s1",
-      "/api/v1/findings",
-      "/api/v1/findings/f1/detail",
-      "/api/v1/reports",
-      "/api/v1/assessments",
-      "/api/v1/analyst/chat",
+    const calls = fetchMock.mock.calls.map((call) => {
+      const [url, init] = call as unknown as [string, RequestInit | undefined];
+      return `${init?.method ?? "GET"} ${url}`;
+    });
+    expect(calls).toEqual([
+      "GET /api/v1/dashboard/summary",
+      "GET /api/v1/assessments",
+      "GET /api/v1/assessments/s1",
+      "GET /api/v1/findings",
+      "GET /api/v1/findings/f1/detail",
+      "GET /api/v1/reports",
+      "POST /api/v1/assessments",
+      "GET /api/v1/scans/s1/analysis",
+      "POST /api/v1/scans/s1/analysis",
     ]);
     expect(api.reportDownloadUrl("r1")).toBe("/api/v1/reports/r1/download");
   });
