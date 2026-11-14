@@ -1,137 +1,333 @@
-# AutoPentest AI
+# 🛡️ AutoPentest AI
+### Automated Penetration Testing. Smarter Security. Stronger Applications.
 
-## Run the complete existing application
+**AutoPentest AI** is an AI-assisted automated penetration testing platform designed to simplify how organizations discover, assess, understand, and respond to web application security vulnerabilities.
 
-See [the integration report](INTEGRATION.md) for inspected components, connected
-endpoints, test results, modified files, and remaining deployment/security blockers.
+By orchestrating established security testing tools and combining their findings into a centralized assessment workflow, AutoPentest AI aims to make penetration testing more accessible, efficient, and actionable.
 
-### Terminal 1: existing Python backend
+Instead of manually switching between multiple security tools and interpreting disconnected outputs, security professionals and developers can work through a unified security assessment experience.
 
-```sh
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-```
-
-In `backend/.env`, set `CORS_ORIGINS=http://localhost:8080` (replace this with
-your actual frontend origin if different). Configure scanner executable paths
-and server-only `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` as needed. Then:
-
-```sh
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --workers 1
-```
-
-### Terminal 2: frontend, from repository root
-
-```sh
-bun install
-cp .env.example .env.development.local
-bun run dev -- --port 8080
-```
-
-Open `http://localhost:8080`. The example points **local development only** to
-`http://127.0.0.1:8001/api/v1`. Register a project and explicitly authorized
-target on **Targets**, install the required tools shown on **New Assessment**,
-and launch a scan against a system you own or have written permission to test.
-Private targets are blocked by default; `ALLOW_PRIVATE_TARGETS=true` is only for
-your isolated, authorized local lab. It never permits cloud metadata/link-local targets.
-
-After the backend confirms completion, open the scan's **AI analysis** action,
-confirm the external provider call, and read the persisted result. Reports
-download as Markdown; PDF/HTML/JSON generation is not implemented in this backend.
-
-For deployment, host FastAPI and scanner tools separately and set the frontend's
-`VITE_API_BASE_URL` to its reachable **HTTPS URL ending in `/api/v1`**, with exact
-backend CORS origins. Rebuild/redeploy after changing the frontend variable.
-Never deploy a localhost API address or rely on the Vite development proxy.
-Do not expose the existing API publicly before implementing authentication,
-ownership checks, and scoped scanner egress; see the release blockers below.
-
-### Checks
-
-```sh
-bun run test
-cd backend
-.venv/bin/python -m pytest tests -q
-```
-
-Frontend production build/TypeScript checks run automatically in Lovable; for
-your own local/CI environment the existing `bun run build` script is available.
+> Build fast. Test continuously. Stay secure.
 
 ---
 
-Build a premium cybersecurity SaaS dashboard called AutoPentest AI.
+## 🚀 The Problem
 
-Product: AI-powered automated web application security assessment platform.
+Modern software development moves quickly. Developers deploy new applications, launch features, and expose services to the internet every day.
 
-Design direction:
+However, security testing is often:
+- Expensive for startups and small organizations.
+- Time-consuming when performed entirely manually.
+- Fragmented across multiple security tools.
+- Difficult to interpret for developers without dedicated security expertise.
+- Repetitive when assessments need to be performed regularly.
 
-Dark cybersecurity interface.
+AutoPentest AI aims to bridge this gap by automating and coordinating different stages of the penetration testing process.
 
-Professional enterprise SaaS appearance.
+## 💡 The Solution
 
-Navy, charcoal and subtle blue/purple accents.
+AutoPentest AI brings multiple penetration testing capabilities into one coordinated platform.
 
-Modern typography.
+The platform follows a structured assessment workflow:
 
-Clean cards, charts and tables.
+1. **Target Configuration** – Define the web application or infrastructure to assess.
+2. **Reconnaissance** – Discover information and map the target's attack surface.
+3. **Vulnerability Discovery** – Execute security scanning tools to identify potential weaknesses.
+4. **AI-Assisted Analysis** – Help interpret findings, understand risks, and identify recommended next steps.
+5. **Reporting** – Organize assessment results into structured security reports.
 
-Responsive design.
+The objective is to reduce manual effort while making security findings easier to understand and act upon.
 
-Pages:
+---
 
-Dashboard: overview, total scans, vulnerabilities, critical findings and recent activity.
+## ✨ Key Features
 
-New Assessment: URL input, authorization confirmation and scan configuration.
+### 1. Centralized Security Dashboard
+- Overview of security assessments.
+- Vulnerability tracking.
+- Assessment and scan status.
+- Security findings visualization.
 
-Scan Details: real-time progress and assessment stages.
+### 2. Automated Security Testing
+Orchestrates established security tools through a coordinated testing workflow.
 
-Vulnerabilities: filterable findings by severity, category and scanner.
+| Tool | Purpose |
+|---|---|
+| Nmap | Network discovery and service enumeration |
+| FFUF | Web content and directory discovery |
+| Nuclei | Vulnerability and security misconfiguration detection |
+| OWASP ZAP | Web application security testing |
 
-Finding Details: technical evidence, business impact and remediation.
+### 3. AI Security Analyst
+An AI-assisted analysis experience designed to help users:
+- Understand vulnerability findings.
+- Interpret security assessment results.
+- Explore potential attack paths.
+- Receive remediation guidance.
+- Identify appropriate next testing steps.
 
-AI Security Analyst: conversational interface for understanding findings.
+### 4. Vulnerability Management
+- Centralized findings.
+- Severity-based organization.
+- Vulnerability evidence.
+- Remediation recommendations.
+- Finding investigation workflows.
 
-Reports: downloadable assessment reports.
+### 5. Security Reporting
+A reporting experience designed to consolidate assessment results and communicate security findings.
 
-Dashboard must include:
+Supported report interface formats include:
+- PDF
+- HTML
+- JSON
 
-Risk score.
+### 6. Assessment Management
+Organize security testing activities through a centralized assessment interface.
 
-Critical/high/medium/low vulnerability breakdown.
+---
 
-Recent assessments.
+## 🏗️ Architecture
 
-Scan activity.
+AutoPentest AI uses a separated frontend and backend architecture.
 
-Security findings chart.
-
-Use reusable components and realistic demo data initially.
-
-Architecture:
-The frontend must communicate with a separate Python FastAPI backend. Do not implement the scanning engine in the frontend. Use API services that can later be connected to real endpoints.
-
-Prioritize a polished, usable MVP over unnecessary animations and features.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/d929e189-549a-4b02-94b1-9c13b90a6f48).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+```text
+             USER
+              |
+              v
+    +----------------------+
+    |   React Frontend     |
+    |  Lovable / TypeScript|
+    +----------------------+
+              |
+              | REST API
+              v
+    +----------------------+
+    |    FastAPI Backend   |
+    |   Python / REST API  |
+    +----------------------+
+              |
+       +------+------+
+       |      |      |
+       v      v      v
+     Nmap    FFUF   Nuclei
+       |      |      |
+       +------+------+
+              |
+              v
+       OWASP ZAP
+              |
+              v
+    +----------------------+
+    | Findings & Assessment|
+    |       Storage        |
+    +----------------------+
+              |
+              v
+    +----------------------+
+    | AI Analysis & Reports|
+    +----------------------+
 ```
+
+### Technology Stack
+
+**Frontend**
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- TanStack Start
+- Bun
+
+**Backend**
+- Python
+- FastAPI
+- SQLite
+- REST API
+
+**Security Tools**
+- Nmap
+- FFUF
+- Nuclei
+- OWASP ZAP
+
+**AI**
+- Claude AI integration for assisted security analysis and reporting.
+
+---
+
+## 📂 Project Structure
+
+The frontend and backend are maintained separately.
+
+### Frontend Repository
+
+```text
+sentinel-security/
+├── src/
+│   ├── components/
+│   ├── routes/
+│   ├── hooks/
+│   ├── lib/
+│   └── ...
+├── public/
+├── package.json
+├── vite.config.ts
+└── README.md
+```
+
+### Backend Project
+
+```text
+autopentest-ai/
+├── app/
+│   ├── api/
+│   ├── core/
+│   ├── models/
+│   ├── services/
+│   └── ...
+├── tests/
+├── requirements.txt
+└── ...
+```
+
+*Directory structures are illustrative; see the individual repositories for the current implementation.*
+
+---
+
+## ⚙️ Getting Started
+
+### Prerequisites
+
+- Node.js
+- Bun
+- Python 3.11+
+- Git
+
+For actual security scanning, the backend also requires the relevant security tools to be installed and accessible.
+
+### 1. Clone the frontend
+
+```bash
+git clone https://github.com/ChrisKamanzi/sentinel-security.git
+
+cd sentinel-security
+```
+
+### 2. Install dependencies
+
+```bash
+bun install
+```
+
+### 3. Configure environment variables
+
+Create a `.env` file in the frontend root:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8001/api/v1
+```
+
+When the API URL is not configured, the frontend can operate using its demonstration experience.
+
+### 4. Start the frontend
+
+```bash
+bun run dev
+```
+
+Open the local URL displayed in your terminal.
+
+### 5. Connect the backend
+
+Start the separate FastAPI backend and ensure it is accessible at:
+
+```text
+http://127.0.0.1:8001/api/v1
+```
+
+The frontend requires compatible API endpoints and response formats to use live backend functionality.
+
+---
+
+## 🧪 Testing
+
+The backend development and testing process includes automated tests for security scanning workflows and individual components.
+
+The backend has previously passed a test suite of 481 tests.
+
+OWASP ZAP integration also has dedicated unit tests.
+
+Run the backend test suite from the backend project:
+
+```bash
+pytest
+```
+
+For integration testing, use a controlled environment containing applications specifically intended for security testing.
+
+---
+
+## 🎯 Target Users
+
+AutoPentest AI is designed with the following users in mind:
+
+- **Startups:** Understand potential security weaknesses before launching products.
+- **Developers:** Incorporate security testing into development workflows.
+- **Security Professionals:** Coordinate multiple security testing tools.
+- **Small and Medium Businesses:** Improve visibility into application security.
+- **Cybersecurity Students:** Learn and experiment with structured penetration testing workflows.
+
+---
+
+## 🔭 Roadmap
+
+AutoPentest AI is an evolving project.
+
+Future development priorities include:
+
+- [ ] Complete frontend and backend API integration.
+- [ ] Expand AI-assisted vulnerability analysis.
+- [ ] Improve automated vulnerability prioritization.
+- [ ] Enhance assessment reporting.
+- [ ] Introduce continuous security assessment workflows.
+- [ ] Support additional security testing tools.
+- [ ] Improve scalability and multi-project management.
+- [ ] Explore CI/CD security integration.
+
+---
+
+## 🔐 Responsible Use
+
+AutoPentest AI is intended for authorized security assessments, educational purposes, and defensive security testing.
+
+Users must only assess systems they own or have explicit permission to test.
+
+The developers are not responsible for unauthorized or unlawful use of this software.
+
+Always follow applicable laws, organizational policies, and responsible disclosure practices.
+
+---
+
+## 👨‍💻 Creator
+
+**Chris Ibambe Kamanzi**
+
+Cybersecurity Specialist | Certified Ethical Hacker (CEH v13)
+
+Master's Student in Information Security at Vilnius Tech.
+
+Interested in penetration testing, security automation, vulnerability research, and building practical cybersecurity solutions.
+
+- GitHub: [@ChrisKamanzi](https://github.com/ChrisKamanzi)
+- LinkedIn: [Chris Ibambe Kamanzi](https://www.linkedin.com/in/chris-ibambe-kamanzi-380178319/)
+
+---
+
+## ⭐ Support the Project
+
+If you find AutoPentest AI interesting, consider giving the repository a ⭐ on GitHub.
+
+Contributions, feedback, feature suggestions, and collaboration are welcome.
+
+**AutoPentest AI — Automating the path from attack surface discovery to actionable security insights.**
