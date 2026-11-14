@@ -1,0 +1,38 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Databases, SQLite side files and every backup/copy (contain scan data)
+.autopentest.db
+autopentest.db
+autopentest.db.pre-live-demo-2026-11-13
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.db.*
+*.sqlite
+*.sqlite3
+*.db.backup-*
+
+# Generated assessment reports (contain target scan data)
+reports/
+
+# macOS metadata
+.DS_Store
+
+# Secrets: any env variant, but keep the template
+.env.*
+!.env.example
+
+# Logs, temp files and scanner scratch output
+*.log
+*.tmp
+scan-output/
+
+# Editor / IDE settings
+.idea/
+.vscode/

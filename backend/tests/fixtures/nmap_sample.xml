@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<nmaprun scanner="nmap" args="nmap -sT -Pn -n -T3 -p 22,23,80,443,6379,8000 -sV -oX - -- 127.0.0.1" start="1794593826" version="7.98" xmloutputversion="1.05">
+<scaninfo type="connect" protocol="tcp" numservices="6" services="22-23,80,443,3000,5555,6379,8000"/>
+<host starttime="1794593826" endtime="1794593838">
+<status state="up" reason="user-set" reason_ttl="0"/>
+<address addr="127.0.0.1" addrtype="ipv4"/>
+<ports>
+<port protocol="tcp" portid="22"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="ssh" product="OpenSSH" version="9.8" extrainfo="protocol 2.0" method="probed" conf="10"/></port>
+<port protocol="tcp" portid="23"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="telnet" method="table" conf="3"/></port>
+<port protocol="tcp" portid="80"><state state="closed" reason="conn-refused" reason_ttl="0"/><service name="http" method="table" conf="3"/></port>
+<port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="http" product="nginx" version="1.27.0" tunnel="ssl" method="probed" conf="10"/></port>
+<port protocol="tcp" portid="6379"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="redis" product="Redis key-value store" version="7.2.4" method="probed" conf="10"/></port>
+<port protocol="tcp" portid="3000"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="ppp" servicefp="SF-Port3000-TCP:V=7.98%r(GetRequest,28B7,&quot;HTTP/1\.1\x20200\x20OK\r\nX-Recruiting:\x20/#/jobs\r\n&quot;)%r(Help,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request&quot;);" method="table" conf="3"/></port>
+<port protocol="tcp" portid="5555"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="freeciv" servicefp="SF-Port5555-TCP:V=7.98%r(NULL,4,&quot;\x00\x01\x02\x03&quot;);" method="table" conf="3"/></port>
+<port protocol="tcp" portid="8000"><state state="open" reason="syn-ack" reason_ttl="0"/><service name="http" product="Uvicorn" method="probed" conf="10"/></port>
+</ports>
+</host>
+<runstats><finished time="1794593838" elapsed="12.34" summary="Nmap done at Fri Nov 13 20:17:18 2026; 1 IP address (1 host up) scanned in 12.34 seconds" exit="success"/><hosts up="1" down="0" total="1"/></runstats>
+</nmaprun>
