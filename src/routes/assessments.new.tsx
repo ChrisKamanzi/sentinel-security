@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Globe, Loader2, ShieldCheck } from "lucide-react";
@@ -7,16 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { api } from "@/lib/api/services";
+import { api, assessmentsQuery } from "@/lib/api/services";
 import type { NewAssessmentInput } from "@/lib/api/types";
 import { PageHeader, Panel } from "@/components/app/ui";
+import { isDemoMode } from "@/lib/api/client";
+import { profileScanners, validTargetUrl } from "@/lib/api/assessment-config";
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/assessments/new")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "New Assessment — AutoPentest AI" },
       { name: "description", content: "Configure and launch an authorized automated web application security assessment." },
       { property: "og:title", content: "New Assessment — AutoPentest AI" },
@@ -27,29 +31,30 @@ export const Route = createFileRoute("/assessments/new")({
 });
 
 const profiles = [
-  { key: "quick", label: "Quick", time: "~15 min", desc: "Passive checks and top OWASP risks" },
-  { key: "standard", label: "Standard", time: "~1 hour", desc: "Full crawl with active injection testing" },
-  { key: "deep", label: "Deep", time: "~3 hours", desc: "Authenticated, exhaustive, AI-validated" },
+  { key: "quick", label: "Quick", desc: "Nmap + Nuclei" },
+  { key: "standard", label: "Standard", desc: "Nmap + FFUF + Nuclei" },
+  { key: "deep", label: "Deep", desc: "Standard + ZAP passive baseline" },
 ] as const;
 
-const modules = ["Injection (SQLi, SSTI, CMDi)", "Cross-site scripting", "Access control / IDOR", "Authentication & sessions", "Security misconfiguration", "Sensitive data exposure"];
+
 
 function NewAssessment() {
   const navigate = useNavigate();
   const [target, setTarget] = useState("");
-  const [name, setName] = useState("");
   const [profile, setProfile] = useState<NewAssessmentInput["profile"]>("standard");
-  const [selected, setSelected] = useState<string[]>(modules);
-  const [useAuth, setUseAuth] = useState(false);
-  const [authHeader, setAuthHeader] = useState("");
+  const queryClient = useQueryClient();
+  const tools = useQuery({ queryKey: ["tools"], queryFn: api.listTools, enabled: !isDemoMode });
+  const unavailable = !isDemoMode && tools.data ? profileScanners[profile].filter((name) => !tools.data.some((tool) => tool.name === name && tool.available && tool.implemented)) : [];
   const [maxRps, setMaxRps] = useState(10);
   const [authorized, setAuthorized] = useState(false);
 
-  const validUrl = /^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(target);
+  const validUrl = validTargetUrl(target);
   const mutation = useMutation({
     mutationFn: api.createAssessment,
     onSuccess: (a) => {
-      toast.success("Assessment queued", { description: a.target });
+      toast.success("Assessment accepted", { description: a.target });
+      void queryClient.invalidateQueries({ queryKey: assessmentsQuery.queryKey });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       navigate({ to: "/scans/$scanId", params: { scanId: a.id } });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -57,7 +62,8 @@ function NewAssessment() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate({ target, name: name || new URL(target).host, authorized, profile, modules: selected, authHeader: useAuth ? authHeader : undefined, maxRps });
+    if (!validUrl || !authorized || isDemoMode || unavailable.length) return;
+    mutation.mutate({ target: target.trim(), name: "", authorized, profile, modules: [], maxRps });
   };
 
   return (
@@ -75,45 +81,29 @@ function NewAssessment() {
                 </div>
                 {target && !validUrl && <p className="text-xs text-destructive">Enter a valid http(s) URL.</p>}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Assessment name <span className="text-muted-foreground">(optional)</span></Label>
-                <Input id="name" placeholder="Customer portal — Q4" value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
+              <p className="text-xs text-muted-foreground">Use a registered, approved target URL. <Link to="/targets" className="text-primary hover:underline">Manage targets</Link></p>
             </div>
           </Panel>
 
           <Panel title="Scan profile">
             <div className="grid gap-3 sm:grid-cols-3">
               {profiles.map((p) => (
-                <button type="button" key={p.key} onClick={() => setProfile(p.key)}
-                  className={cn("rounded-lg border p-4 text-left transition-colors", profile === p.key ? "border-primary bg-primary/10" : "border-border hover:border-muted-foreground/40")}>
-                  <div className="flex items-center justify-between"><span className="font-medium text-foreground">{p.label}</span><span className="text-xs text-muted-foreground">{p.time}</span></div>
+                <Button variant="outline" type="button" key={p.key} onClick={() => setProfile(p.key)}
+                  className={cn("h-auto flex-col items-stretch whitespace-normal rounded-lg border p-4 text-left transition-colors", profile === p.key ? "border-primary bg-primary/10" : "border-border hover:border-muted-foreground/40")}>
+                  <div className="flex items-center justify-between"><span className="font-medium text-foreground">{p.label}</span></div>
                   <p className="mt-1 text-xs text-muted-foreground">{p.desc}</p>
-                </button>
+                </Button>
               ))}
             </div>
           </Panel>
 
-          <Panel title="Test modules">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {modules.map((m) => (
-                <label key={m} className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 text-sm hover:bg-muted/40">
-                  <Checkbox checked={selected.includes(m)} onCheckedChange={(c) => setSelected((s) => (c ? [...s, m] : s.filter((x) => x !== m)))} />
-                  {m}
-                </label>
-              ))}
-            </div>
+          <Panel title="Scanner readiness">
+            {isDemoMode ? <p className="text-sm text-muted-foreground">Demo data only. No scans can be launched without the FastAPI backend.</p> : tools.isError ? <p role="alert" className="text-sm text-destructive">{tools.error.message}</p> : tools.isPending ? <p className="text-sm text-muted-foreground">Checking installed scanners…</p> : <ul className="space-y-2 text-sm">{profileScanners[profile].map((name) => <li key={name} className="flex justify-between"><span className="uppercase">{name}</span><span className={unavailable.includes(name) ? "text-destructive" : "text-success"}>{unavailable.includes(name) ? "Not available" : "Ready"}</span></li>)}</ul>}
           </Panel>
-
-          <Panel title="Advanced">
+          <Panel title="Request limits">
             <div className="space-y-5">
-              <div className="flex items-center justify-between">
-                <div><Label>Authenticated scan</Label><p className="text-xs text-muted-foreground">Send a session header with every request</p></div>
-                <Switch checked={useAuth} onCheckedChange={setUseAuth} />
-              </div>
-              {useAuth && <Input placeholder="Authorization: Bearer eyJ..." value={authHeader} onChange={(e) => setAuthHeader(e.target.value)} className="font-mono" />}
               <div>
-                <div className="mb-3 flex justify-between"><Label>Max requests per second</Label><span className="font-mono text-sm text-foreground">{maxRps}</span></div>
+                <div className="mb-3 flex justify-between"><Label>FFUF / Nuclei requests per second</Label><span className="font-mono text-sm text-foreground">{maxRps}</span></div>
                 <Slider min={1} max={50} step={1} value={[maxRps]} onValueChange={(v) => setMaxRps(v[0] ?? 10)} />
               </div>
             </div>
@@ -134,11 +124,10 @@ function NewAssessment() {
           <Panel title="Summary">
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between"><dt className="text-muted-foreground">Profile</dt><dd className="capitalize text-foreground">{profile}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Modules</dt><dd className="text-foreground">{selected.length} / {modules.length}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Authenticated</dt><dd className="text-foreground">{useAuth ? "Yes" : "No"}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Scanners</dt><dd className="text-foreground">{profileScanners[profile].length}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Rate limit</dt><dd className="text-foreground">{maxRps} req/s</dd></div>
             </dl>
-            <Button type="submit" className="mt-5 w-full" disabled={!validUrl || !authorized || selected.length === 0 || mutation.isPending}>
+            <Button type="submit" className="mt-5 w-full" disabled={isDemoMode || !validUrl || !authorized || unavailable.length > 0 || tools.isPending || tools.isError || mutation.isPending}>
               {mutation.isPending && <Loader2 className="animate-spin" />} Launch assessment
             </Button>
           </Panel>

@@ -1,7 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
-import { ApiError, apiFetch, apiUrl, isDemoMode } from "./client";
+import { ApiError, apiFetch, apiRequest, apiUrl, isDemoMode } from "./client";
 import { demoAssessments, demoFindings, demoReports, demoSummary, stageTemplate } from "./demo-data";
-import type { Assessment, ChatMessage, DashboardSummary, Finding, NewAssessmentInput, Report, ScanAnalysis, ScanDetail } from "./types";
+import type { Assessment, ChatMessage, DashboardSummary, Finding, NewAssessmentInput, Project, Target, ToolStatus, Report, ScanAnalysis, ScanDetail } from "./types";
+import { validTargetUrl } from "./assessment-config";
 
 /*
  * Service layer for the FastAPI backend. Each function maps to one endpoint.
@@ -9,12 +10,9 @@ import type { Assessment, ChatMessage, DashboardSummary, Finding, NewAssessmentI
  */
 const delay = <T,>(v: T, ms = 250) => new Promise<T>((r) => setTimeout(() => r(v), ms));
 
-// Demo-only: simulated scan progress for running assessments.
-const demoStart = Date.now();
+// Demo-only: deterministic sample state; never imply actual scanner progress.
 function demoProgress(a: Assessment): Assessment {
-  if (a.status !== "running") return a;
-  const p = Math.min(99, Math.floor(((Date.now() - demoStart) / 1000) * 1.2) + 18);
-  return { ...a, progress: p };
+  return a;
 }
 
 export const api = {
@@ -29,15 +27,16 @@ export const api = {
   /** POST /assessments */
   createAssessment: (input: NewAssessmentInput): Promise<Assessment> => {
     if (!input.authorized) return Promise.reject(new Error("Authorization confirmation is required"));
-    return isDemoMode
-      ? delay({ ...demoAssessments[0]!, name: input.name, target: input.target }, 600)
-      : apiFetch("/assessments", { method: "POST", body: JSON.stringify(input) });
+    if (!validTargetUrl(input.target)) return Promise.reject(new Error("Enter a valid http(s) URL without credentials"));
+    if (isDemoMode) return Promise.reject(new Error("Connect the FastAPI backend to launch an assessment. No scan was submitted."));
+    return apiFetch("/assessments", { method: "POST", body: JSON.stringify(input) });
   },
 
   /** GET /assessments/{id} — poll for real-time progress */
   getScan: async (id: string): Promise<ScanDetail> => {
     if (!isDemoMode) return apiFetch(`/assessments/${id}`);
-    const base = demoAssessments.find((a) => a.id === id) ?? demoAssessments[0]!;
+    const base = demoAssessments.find((a) => a.id === id);
+    if (!base) throw new ApiError(404, "Assessment not found");
     const a = demoProgress(base);
     const per = 100 / stageTemplate.length;
     const stages = stageTemplate.map((s, i) => ({
@@ -60,7 +59,15 @@ export const api = {
   },
 
   /** GET /findings */
-  listFindings: (): Promise<Finding[]> => (isDemoMode ? delay(demoFindings) : apiFetch("/findings")),
+  listFindings: (assessmentId?: string): Promise<Finding[]> => (isDemoMode ? delay(demoFindings.filter((f) => !assessmentId || f.assessmentId === assessmentId)) : apiFetch(`/findings${assessmentId ? `?assessmentId=${encodeURIComponent(assessmentId)}` : ""}`)),
+
+  /** Existing project and target registration endpoints (no implicit authorization). */
+  listProjects: (): Promise<Project[]> => isDemoMode ? delay([]) : apiFetch("/projects"),
+  createProject: (name: string): Promise<Project> => isDemoMode ? Promise.reject(new Error("Target registration requires the FastAPI backend")) : apiFetch("/projects", { method: "POST", body: JSON.stringify({ name }) }),
+  listTargets: (projectId: string): Promise<Target[]> => isDemoMode ? delay([]) : apiFetch(`/projects/${encodeURIComponent(projectId)}/targets`),
+  createTarget: (projectId: string, input: Pick<Target, "name" | "host" | "base_url" | "is_authorized">): Promise<Target> => isDemoMode ? Promise.reject(new Error("Target registration requires the FastAPI backend")) : apiFetch(`/projects/${encodeURIComponent(projectId)}/targets`, { method: "POST", body: JSON.stringify(input) }),
+  updateTarget: (id: string, isAuthorized: boolean): Promise<Target> => isDemoMode ? Promise.reject(new Error("Target management requires the FastAPI backend")) : apiFetch(`/targets/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ is_authorized: isAuthorized }) }),
+  listTools: (): Promise<ToolStatus[]> => isDemoMode ? delay([]) : apiFetch("/tools"),
 
   /**
    * GET /findings/{id}/detail. (The backend's GET /findings/{id} is its older
@@ -83,6 +90,11 @@ export const api = {
 
   /** URL for GET /reports/{id}/download */
   reportDownloadUrl: (id: string) => (isDemoMode ? null : apiUrl(`/reports/${id}/download`)),
+
+  downloadReport: async (id: string): Promise<Blob> => {
+    if (isDemoMode) throw new Error("Connect the FastAPI backend to download real reports");
+    return (await apiRequest(`/reports/${encodeURIComponent(id)}/download`)).blob();
+  },
 
   /**
    * Latest AI analysis of an assessment (any status): GET /scans/{id}/analysis.
@@ -126,7 +138,9 @@ export const api = {
 
 export const dashboardQuery = queryOptions({ queryKey: ["dashboard"], queryFn: api.getDashboard });
 export const assessmentsQuery = queryOptions({ queryKey: ["assessments"], queryFn: api.listAssessments });
-export const findingsQuery = queryOptions({ queryKey: ["findings"], queryFn: api.listFindings });
+export const findingsQuery = queryOptions({ queryKey: ["findings"], queryFn: () => api.listFindings() });
+export const scanFindingsQuery = (id: string) => queryOptions({ queryKey: ["findings", id], queryFn: () => api.listFindings(id) });
+export const projectsQuery = queryOptions({ queryKey: ["projects"], queryFn: api.listProjects });
 export const findingQuery = (id: string) => queryOptions({ queryKey: ["finding", id], queryFn: () => api.getFinding(id) });
 export const reportsQuery = queryOptions({ queryKey: ["reports"], queryFn: api.listReports });
 export const scanAnalysisQuery = (scanId: string) =>

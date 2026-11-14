@@ -93,6 +93,33 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
+export interface Target {
+  id: string;
+  project_id: string;
+  name: string;
+  host: string;
+  base_url: string | null;
+  is_authorized: boolean;
+  description: string | null;
+  created_at: string;
+}
+
+export interface ToolStatus {
+  name: string;
+  display_name: string;
+  implemented: boolean;
+  available: boolean;
+  path: string | null;
+  version: string | null;
+}
+
 /*
  * AI analysis, as returned by the backend's existing endpoints
  * (POST/GET /scans/{id}/analysis). These keep the backend's snake_case keys.

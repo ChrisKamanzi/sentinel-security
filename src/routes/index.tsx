@@ -4,11 +4,14 @@ import { Activity, AlertOctagon, Bug, FileText, Plus, Radar, ShieldAlert } from 
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { assessmentsQuery, dashboardQuery } from "@/lib/api/services";
+import { isDemoMode } from "@/lib/api/client";
 import { PageHeader, Panel, RiskGauge, SEVERITIES, StatCard, StatusBadge, fmtDate, sevDot } from "@/components/app/ui";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Dashboard — AutoPentest AI" },
       { name: "description", content: "Security posture overview: risk score, vulnerabilities, critical findings and scan activity." },
       { property: "og:title", content: "Dashboard — AutoPentest AI" },
@@ -30,7 +33,7 @@ function Dashboard() {
     <>
       <PageHeader
         title="Security overview"
-        description="Northwind Bank · all monitored applications"
+        description={isDemoMode ? "Northwind Bank · sample workspace" : "All registered applications"}
         actions={<Button asChild><Link to="/assessments/new"><Plus /> New assessment</Link></Button>}
       />
 
@@ -52,7 +55,7 @@ function Dashboard() {
                   <span className="font-mono text-foreground">{s.breakdown[k]}</span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className={`h-full rounded-full ${sevDot[k]}`} style={{ width: `${(s.breakdown[k] / total) * 100}%` }} />
+                  <div className={`h-full rounded-full ${sevDot[k]}`} style={{ width: `${total ? (s.breakdown[k] / total) * 100 : 0}%` }} />
                 </div>
               </div>
             ))}

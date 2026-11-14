@@ -253,7 +253,7 @@ def test_missing_credentials_recorded(client, scan_with_findings):
     client.post(f"{API}/scans/{scan_with_findings['id']}/analysis")
     a = client.get(f"{API}/scans/{scan_with_findings['id']}/analysis").json()
     assert a["status"] == "failed"
-    assert "disabled in tests" in a["error_message"]
+    assert "internal error" in a["error_message"]
 
 
 # --- endpoint preconditions ---------------------------------------------------------------------
@@ -369,3 +369,12 @@ def test_methodology_omits_nuclei_when_it_did_not_run():
 
 def test_system_prompt_explains_ffuf_evidence_limits():
     assert "FFUF never saw the content" in ai_analyst.SYSTEM_PROMPT
+
+
+def test_unexpected_provider_errors_do_not_expose_secrets(client, scan_with_findings, monkeypatch, caplog):
+    use_fake(monkeypatch, lambda kw: RuntimeError("Authorization: Bearer PRIVATE_TEST_TOKEN"))
+    client.post(f"{API}/scans/{scan_with_findings['id']}/analysis")
+    result = client.get(f"{API}/scans/{scan_with_findings['id']}/analysis").json()
+    assert result["status"] == "failed"
+    assert result["error_message"] == "Analysis failed due to an internal error; check the server configuration"
+    assert "PRIVATE_TEST_TOKEN" not in caplog.text

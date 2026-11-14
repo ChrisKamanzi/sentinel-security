@@ -322,21 +322,21 @@ def run_analysis(analysis_id: uuid.UUID, bind: Engine) -> None:
             _fail(analysis, str(exc))
         except anthropic.AuthenticationError:
             _fail(analysis, "Anthropic authentication failed: check ANTHROPIC_API_KEY on the server")
-        except anthropic.PermissionDeniedError as exc:
-            _fail(analysis, f"Anthropic API permission denied: {exc.message}")
+        except anthropic.PermissionDeniedError:
+            _fail(analysis, "Anthropic API permission denied; check server account permissions")
         except anthropic.NotFoundError:
             _fail(analysis, f"Model '{settings.anthropic_model}' not found; check ANTHROPIC_MODEL")
         except anthropic.RateLimitError:
             _fail(analysis, "Anthropic rate limit reached; try again shortly")
-        except anthropic.BadRequestError as exc:
-            _fail(analysis, f"Anthropic rejected the request: {exc.message}")
+        except anthropic.BadRequestError:
+            _fail(analysis, "Anthropic rejected the request; check server model configuration")
         except anthropic.APIStatusError as exc:
             _fail(analysis, f"Anthropic API error {exc.status_code}; try again later")
         except anthropic.APIConnectionError:
             _fail(analysis, "Could not reach the Anthropic API (network error or timeout)")
         except Exception as exc:  # includes missing credentials at client creation
-            logger.exception("AI analysis %s failed", analysis_id)
-            _fail(analysis, f"Analysis failed: {type(exc).__name__}: {exc}")
+            logger.error("AI analysis %s failed (%s)", analysis_id, type(exc).__name__)
+            _fail(analysis, "Analysis failed due to an internal error; check the server configuration")
         finally:
             analysis.completed_at = _now()
             analysis.duration_seconds = round(time.monotonic() - started, 3)

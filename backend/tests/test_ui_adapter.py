@@ -486,3 +486,12 @@ def test_dashboard_risk_trend(client, approved_target, monkeypatch):
     s = client.get(f"{API}/dashboard/summary").json()
     assert s["riskTrend"] == -60
     assert s["riskScore"] == 0  # latest finished assessment for the only target
+
+
+@pytest.mark.parametrize("profile, expected", [("quick", "quick"), ("standard", "standard"), ("deep", "standard")])
+def test_ui_profile_selects_actual_nuclei_profile(profile, expected):
+    from app.api.routes.ui import _profile_options
+    from app.scanners.nuclei import NucleiOptions
+    options = NucleiOptions.model_validate(_profile_options(profile, 10)["nuclei"])
+    assert options.profile == expected
+    assert options.rate_limit == 10

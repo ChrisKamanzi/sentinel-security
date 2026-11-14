@@ -9,6 +9,8 @@ import { PageHeader, StatusBadge, fmtDate } from "@/components/app/ui";
 export const Route = createFileRoute("/scans/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Scans — AutoPentest AI" },
       { name: "description", content: "All security assessments and their progress." },
       { property: "og:title", content: "Scans — AutoPentest AI" },

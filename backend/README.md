@@ -1,4 +1,4 @@
-# AutoPentest AI — Backend starter
+# AutoPentest AI — Existing FastAPI backend
 
 ## 1. Create and activate a virtual environment
 
@@ -23,16 +23,17 @@ SQLite is the default development database. To use PostgreSQL later, install a P
 
 ## 4. Start the API
 
-Run from the repository root:
+Run from the `backend/` directory so `.env` and the development database have
+consistent locations. Do not use reload or multiple workers while jobs run:
 
 ```bash
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --workers 1
 ```
 
 Open:
-- http://127.0.0.1:8000/
-- http://127.0.0.1:8000/health
-- http://127.0.0.1:8000/docs
+- http://127.0.0.1:8001/
+- http://127.0.0.1:8001/health
+- http://127.0.0.1:8001/docs
 
 Startup creates any missing tables and adds missing columns to an existing
 SQLite database in place (additive only; existing rows are preserved).

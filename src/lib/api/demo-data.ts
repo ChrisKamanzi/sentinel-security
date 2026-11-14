@@ -1,7 +1,7 @@
 import type { Assessment, DashboardSummary, Finding, Report, ScanStage } from "./types";
 
 export const demoAssessments: Assessment[] = [
-  { id: "asm-1042", name: "Customer Portal", target: "https://portal.northwind-bank.com", status: "running", progress: 0, startedAt: new Date(Date.now() - 6 * 60_000).toISOString(), riskScore: 68, findings: { critical: 1, high: 3, medium: 5, low: 4 }, profile: "Deep" },
+  { id: "asm-1042", name: "Customer Portal", target: "https://portal.northwind-bank.com", status: "running", progress: 18, startedAt: "2026-11-12T17:20:00Z", riskScore: 68, findings: { critical: 1, high: 3, medium: 5, low: 4 }, profile: "Deep" },
   { id: "asm-1041", name: "Payments API", target: "https://api.northwind-bank.com/v2", status: "completed", progress: 100, startedAt: "2026-11-11T09:12:00Z", finishedAt: "2026-11-11T10:48:00Z", riskScore: 82, findings: { critical: 2, high: 4, medium: 7, low: 9 }, profile: "Standard" },
   { id: "asm-1040", name: "Marketing Site", target: "https://www.northwind-bank.com", status: "completed", progress: 100, startedAt: "2026-11-10T14:00:00Z", finishedAt: "2026-11-10T14:31:00Z", riskScore: 24, findings: { critical: 0, high: 0, medium: 3, low: 6 }, profile: "Quick" },
   { id: "asm-1039", name: "Admin Console", target: "https://admin.northwind-bank.com", status: "completed", progress: 100, startedAt: "2026-11-08T08:20:00Z", finishedAt: "2026-11-08T11:02:00Z", riskScore: 71, findings: { critical: 1, high: 5, medium: 4, low: 2 }, profile: "Deep" },

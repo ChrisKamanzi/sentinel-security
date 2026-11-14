@@ -19,6 +19,8 @@ export const Route = createFileRoute("/analyst")({
   }),
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "AI Security Analyst — AutoPentest AI" },
       { name: "description", content: "Ask an AI security analyst to explain findings, prioritize fixes and suggest remediation." },
       { property: "og:title", content: "AI Security Analyst — AutoPentest AI" },

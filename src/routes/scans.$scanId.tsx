@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Circle, CircleSlash, Loader2, ArrowLeft, XCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api/services";
+import { Button } from "@/components/ui/button";
+import { api, scanFindingsQuery } from "@/lib/api/services";
 import type { ScanStatus, StageStatus } from "@/lib/api/types";
 import { PageHeader, Panel, SEVERITIES, StatusBadge, Unavailable, fmtDate, sevDot } from "@/components/app/ui";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,8 @@ function StageIcon({ status }: { status: StageStatus }) {
 export const Route = createFileRoute("/scans/$scanId")({
   head: ({ params }) => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: `Scan ${params.scanId} — AutoPentest AI` },
       { name: "description", content: "Real-time progress and stages of a security assessment." },
       { property: "og:title", content: `Scan ${params.scanId} — AutoPentest AI` },
@@ -41,11 +44,14 @@ export const Route = createFileRoute("/scans/$scanId")({
 function ScanDetails() {
   const { scanId } = Route.useParams();
   // Polls the backend while the scan is queued or running.
-  const { data: scan } = useQuery({
+  const { data: scan, error, isError, refetch } = useQuery({
     queryKey: ["scan", scanId],
     queryFn: () => api.getScan(scanId),
     refetchInterval: (q) => (q.state.data && ACTIVE.includes(q.state.data.status) ? 2000 : false),
   });
+  const findings = useQuery({ ...scanFindingsQuery(scanId), refetchInterval: scan && ACTIVE.includes(scan.status) ? 2000 : false });
+
+  if (isError) return <Panel title="Assessment unavailable"><p role="alert" className="text-sm text-destructive">{error.message}</p><Button variant="outline" className="mt-4" onClick={() => void refetch()}>Retry</Button></Panel>;
 
   if (!scan) return <div className="space-y-4"><Skeleton className="h-10 w-72" /><Skeleton className="h-40" /><Skeleton className="h-80" /></div>;
 
@@ -101,7 +107,10 @@ function ScanDetails() {
                 </div>
               ))}
             </div>
-            <Link to="/vulnerabilities" className="mt-3 inline-block text-xs text-primary hover:underline">View findings →</Link>
+            {findings.isError && <p role="alert" className="mt-3 text-sm text-destructive">{findings.error.message}</p>}
+            <ul className="mt-3 space-y-2">{findings.data?.map((f) => <li key={f.id}><Link to="/vulnerabilities/$findingId" params={{ findingId: f.id }} className="text-sm text-primary hover:underline">{f.title}</Link><span className="ml-2 text-xs capitalize text-muted-foreground">{f.severity}</span></li>)}</ul>
+            {!findings.isPending && !findings.isError && !findings.data?.length && <p className="mt-3 text-sm text-muted-foreground">No findings reported for this assessment.</p>}
+            <div className="mt-4 flex flex-wrap gap-2"><Button variant="outline" size="sm" asChild><Link to="/analyst" search={{ scan: scanId }}>AI analysis</Link></Button><Button variant="outline" size="sm" asChild><Link to="/reports">Reports</Link></Button></div>
           </Panel>
           <Panel title="Live log">
             <div className="max-h-72 overflow-y-auto rounded-lg bg-background p-3 font-mono text-xs">

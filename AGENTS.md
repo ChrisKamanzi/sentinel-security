@@ -32,3 +32,6 @@ use the editor.
 ## Project rules
 - All backend data goes through `src/lib/api/services.ts` (one function per FastAPI endpoint); components never call `fetch` directly. Why: the scanning engine lives in a separate Python FastAPI service.
 - `VITE_API_BASE_URL` unset = demo mode using `src/lib/api/demo-data.ts`. Why: lets the UI run before the backend exists.
+- Keep target registration explicit and use existing project/target endpoints; launching an assessment must never silently approve a target. Why: FastAPI requires pre-approved scope.
+- Mirror backend profile scanner selection in `assessment-config.ts` and test the mapping; do not offer ignored module/authentication controls. Why: the UI must describe actual supported scans.
+- Use the API client's bounded transport for JSON and report downloads, and keep demo timestamps deterministic. Why: failures must be visible and SSR must match hydration.

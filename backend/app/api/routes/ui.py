@@ -94,7 +94,7 @@ def _profile_options(profile: str, max_rps: int) -> dict[str, dict]:
     return {
         "nmap": {"top_ports": 100} if profile == "quick" else {},
         "ffuf": {"rate_limit": min(max_rps, 100)},
-        "nuclei": {"rate_limit": min(max_rps, 150)},
+        "nuclei": {"rate_limit": min(max_rps, 150), "profile": "quick" if profile == "quick" else "standard"},
         "zap": {},
     }
 

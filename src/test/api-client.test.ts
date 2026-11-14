@@ -112,3 +112,42 @@ describe("service layer paths", () => {
     expect(api.reportDownloadUrl("r1")).toBe("/api/v1/reports/r1/download");
   });
 });
+
+describe("API reliability", () => {
+  it("surfaces FastAPI validation details", async () => {
+    const c = await loadClient({ base: "/api/v1" });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ detail: [{ loc: ["body", "maxRps"], msg: "Input should be greater than or equal to 1" }] }), { status: 422 })));
+    await expect(c.apiFetch("/assessments")).rejects.toThrow("maxRps: Input should be greater than or equal to 1");
+  });
+  it("does not replace failed live reads with mock data", async () => {
+    await loadClient({ base: "/api/v1" });
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("network"); }));
+    const { api } = await import("@/lib/api/services");
+    await expect(api.getDashboard()).rejects.toThrow("Cannot reach the FastAPI backend");
+  });
+  it("times out a stalled request after 30 seconds", async () => {
+    const c = await loadClient({ base: "/api/v1" });
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal("fetch", vi.fn((_url, init: RequestInit) => new Promise((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))))));
+      const check = expect(c.apiFetch("/assessments")).rejects.toThrow("within 30 seconds");
+      await vi.advanceTimersByTimeAsync(30_000);
+      await check;
+    } finally { vi.useRealTimers(); }
+  });
+  it("never claims a demo scan was submitted", async () => {
+    await loadClient({});
+    const { api } = await import("@/lib/api/services");
+    await expect(api.createAssessment({ target: "https://example.com", authorized: true, name: "test", profile: "quick", modules: [], maxRps: 10 })).rejects.toThrow("No scan was submitted");
+  });
+  it("connects existing target and report endpoints", async () => {
+    await loadClient({ base: "/api/v1" });
+    const mock = vi.fn(async (_url: string, _init?: RequestInit) => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", mock);
+    const { api } = await import("@/lib/api/services");
+    await api.listProjects(); await api.createProject("Lab"); await api.listTargets("p1");
+    await api.createTarget("p1", { name: "Lab", host: "example.com", base_url: "https://example.com", is_authorized: true });
+    await api.updateTarget("t1", false); await api.listTools(); await api.listFindings("s1"); await api.downloadReport("s1");
+    expect(mock.mock.calls.map((args) => args[0])).toEqual(["/api/v1/projects", "/api/v1/projects", "/api/v1/projects/p1/targets", "/api/v1/projects/p1/targets", "/api/v1/targets/t1", "/api/v1/tools", "/api/v1/findings?assessmentId=s1", "/api/v1/reports/s1/download"]);
+  });
+});

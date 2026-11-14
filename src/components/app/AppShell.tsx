@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { Bot, FileText, LayoutDashboard, Radar, ShieldAlert, ShieldCheck, Plus } from "lucide-react";
+import { Bot, FileText, LayoutDashboard, Radar, ShieldAlert, ShieldCheck, Plus, Globe } from "lucide-react";
 import { isDemoMode } from "@/lib/api/client";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/assessments/new", label: "New Assessment", icon: Plus },
   { to: "/scans", label: "Scans", icon: Radar },
+  { to: "/targets", label: "Targets", icon: Globe },
   { to: "/vulnerabilities", label: "Vulnerabilities", icon: ShieldAlert },
   { to: "/analyst", label: "AI Analyst", icon: Bot },
   { to: "/reports", label: "Reports", icon: FileText },
@@ -39,9 +40,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="rounded-lg border border-sidebar-border p-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-2 font-medium text-foreground">
             <span className={isDemoMode ? "size-2 rounded-full bg-sev-medium" : "size-2 rounded-full bg-success"} />
-            {isDemoMode ? "Demo data" : "Backend connected"}
+            {isDemoMode ? "Demo data" : "Live API mode"}
           </div>
-          <p className="mt-1">{isDemoMode ? "Set VITE_API_BASE_URL to connect FastAPI." : "Live FastAPI backend"}</p>
+          <p className="mt-1">{isDemoMode ? "Sample workspace · no live scans" : "Results from configured FastAPI"}</p>
         </div>
       </aside>
 

@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/vulnerabilities/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Vulnerabilities — AutoPentest AI" },
       { name: "description", content: "Filter security findings by severity, category and scanner." },
       { property: "og:title", content: "Vulnerabilities — AutoPentest AI" },

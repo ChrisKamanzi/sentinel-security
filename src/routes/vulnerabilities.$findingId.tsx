@@ -23,6 +23,8 @@ export const Route = createFileRoute("/vulnerabilities/$findingId")({
   },
   head: ({ loaderData, params }) => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: `${loaderData?.title ?? params.findingId} — AutoPentest AI` },
       { name: "description", content: "Technical evidence, business impact and remediation guidance for a security finding." },
       { property: "og:title", content: `${loaderData?.title ?? "Finding"} — AutoPentest AI` },
