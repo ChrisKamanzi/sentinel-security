@@ -272,10 +272,9 @@ For integration testing, use a controlled environment containing applications sp
 
 AutoPentest AI is designed with the following users in mind:
 
-- **Startups:** Understand potential security weaknesses before launching products.
+- **SMes:** Understand potential security weaknesses before launching products.
 - **Developers:** Incorporate security testing into development workflows.
 - **Security Professionals:** Coordinate multiple security testing tools.
-- **Small and Medium Businesses:** Improve visibility into application security.
 - **Cybersecurity Students:** Learn and experiment with structured penetration testing workflows.
 
 ---
