@@ -1,5 +1,8 @@
 export type Severity = "critical" | "high" | "medium" | "low" | "info";
-export type ScanStatus = "queued" | "running" | "completed" | "failed";
+/** Backend scan statuses. "partial": some scanners completed, others failed. */
+export type ScanStatus = "queued" | "running" | "completed" | "partial" | "failed";
+/** Per-scanner stage status; "failed"/"skipped" are never shown as done. */
+export type StageStatus = "pending" | "running" | "done" | "failed" | "skipped";
 
 export interface Assessment {
   id: string;
@@ -18,14 +21,16 @@ export interface ScanStage {
   key: string;
   label: string;
   description: string;
-  status: "pending" | "running" | "done";
+  status: StageStatus;
 }
 
 export interface ScanDetail extends Assessment {
   stages: ScanStage[];
   log: { time: string; message: string; level: "info" | "warn" | "finding" }[];
-  requestsSent: number;
-  endpointsDiscovered: number;
+  /** null: not tracked by the backend. */
+  requestsSent: number | null;
+  /** null: no discovery scanner has reported yet. */
+  endpointsDiscovered: number | null;
 }
 
 export interface Finding {
@@ -38,10 +43,12 @@ export interface Finding {
   target: string;
   endpoint: string;
   cwe: string;
-  cvss: number;
+  /** null: the scanner did not report a CVSS score. */
+  cvss: number | null;
   status: "open" | "triaged" | "fixed";
   discoveredAt: string;
   description: string;
+  /** Scanners store one evidence block (in `response`); `request` may be empty. */
   evidence: { request: string; response: string };
   businessImpact: string;
   remediation: string[];
@@ -66,7 +73,7 @@ export interface Report {
   title: string;
   target: string;
   generatedAt: string;
-  format: "pdf" | "html" | "json";
+  format: "pdf" | "html" | "json" | "md";
   sizeKb: number;
   findings: number;
 }

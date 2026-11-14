@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Download, FileJson, FileText, Globe } from "lucide-react";
+import { Download, FileCode, FileJson, FileText, Globe, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api, reportsQuery } from "@/lib/api/services";
+import type { Report } from "@/lib/api/types";
 import { PageHeader, fmtDate } from "@/components/app/ui";
+import { fmtSize } from "@/lib/format";
 
 export const Route = createFileRoute("/reports")({
   head: () => ({
@@ -19,7 +21,7 @@ export const Route = createFileRoute("/reports")({
   component: Reports,
 });
 
-const icons = { pdf: FileText, html: Globe, json: FileJson };
+const icons: Record<Report["format"], LucideIcon> = { pdf: FileText, html: Globe, json: FileJson, md: FileCode };
 
 function Reports() {
   const { data } = useSuspenseQuery(reportsQuery);
@@ -33,7 +35,7 @@ function Reports() {
       <PageHeader title="Reports" description="Generated after each completed assessment." />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {data.map((r) => {
-          const Icon = icons[r.format];
+          const Icon = icons[r.format] ?? FileText;
           return (
             <div key={r.id} className="panel flex flex-col p-5">
               <div className="flex items-start justify-between">
@@ -43,7 +45,7 @@ function Reports() {
               <h3 className="mt-4 font-medium text-foreground">{r.title}</h3>
               <p className="font-mono text-xs text-muted-foreground">{r.target}</p>
               <div className="mt-4 flex gap-4 text-xs text-muted-foreground">
-                <span>{r.findings} findings</span><span>{(r.sizeKb / 1024).toFixed(1)} MB</span><span>{fmtDate(r.generatedAt)}</span>
+                <span>{r.findings} findings</span><span>{fmtSize(r.sizeKb)}</span><span>{fmtDate(r.generatedAt)}</span>
               </div>
               <Button variant="outline" className="mt-5" onClick={() => download(r.id)}><Download /> Download</Button>
             </div>

@@ -4,7 +4,16 @@ import { ArrowLeft, Bot, Briefcase, CheckCircle2, Code2, Wrench } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { findingQuery } from "@/lib/api/services";
-import { Panel, SeverityBadge, fmtDate } from "@/components/app/ui";
+import { Panel, SeverityBadge, Unavailable, fmtDate } from "@/components/app/ui";
+import { fmtCvss } from "@/lib/format";
+
+function Evidence({ text }: { text: string }) {
+  return <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-background p-4 font-mono text-xs leading-relaxed text-foreground">{text}</pre>;
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm italic text-muted-foreground">{children}</p>;
+}
 
 export const Route = createFileRoute("/vulnerabilities/$findingId")({
   loader: async ({ context, params }) => {
@@ -36,35 +45,57 @@ function FindingDetails() {
         <div>
           <div className="flex flex-wrap items-center gap-2"><SeverityBadge severity={f.severity} /><span className="font-mono text-xs text-muted-foreground">{f.id}</span></div>
           <h1 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">{f.title}</h1>
-          <p className="mt-1 font-mono text-sm text-muted-foreground">{f.target} · {f.endpoint}</p>
+          <p className="mt-1 font-mono text-sm text-muted-foreground">{f.endpoint ? `${f.target} · ${f.endpoint}` : f.target}</p>
         </div>
         <Button variant="outline" asChild><Link to="/analyst" search={{ finding: f.id }}><Bot /> Ask AI analyst</Link></Button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <Panel title="Description"><p className="text-sm leading-relaxed text-foreground/90">{f.description}</p></Panel>
-          <Panel title="Technical evidence" action={<Code2 className="size-4 text-muted-foreground" />}>
-            <Tabs defaultValue="request">
-              <TabsList><TabsTrigger value="request">Request</TabsTrigger><TabsTrigger value="response">Response</TabsTrigger></TabsList>
-              <TabsContent value="request"><pre className="overflow-x-auto rounded-lg bg-background p-4 font-mono text-xs leading-relaxed text-foreground">{f.evidence.request}</pre></TabsContent>
-              <TabsContent value="response"><pre className="overflow-x-auto rounded-lg bg-background p-4 font-mono text-xs leading-relaxed text-foreground">{f.evidence.response}</pre></TabsContent>
-            </Tabs>
+          <Panel title="Description">
+            {f.description ? <p className="text-sm leading-relaxed text-foreground/90">{f.description}</p> : <Empty>The scanner provided no description.</Empty>}
           </Panel>
-          <Panel title="Business impact" action={<Briefcase className="size-4 text-muted-foreground" />}><p className="text-sm leading-relaxed text-foreground/90">{f.businessImpact}</p></Panel>
+          <Panel title="Technical evidence" action={<Code2 className="size-4 text-muted-foreground" />}>
+            {f.evidence.request ? (
+              <Tabs defaultValue="request">
+                <TabsList><TabsTrigger value="request">Request</TabsTrigger><TabsTrigger value="response">Response</TabsTrigger></TabsList>
+                <TabsContent value="request"><Evidence text={f.evidence.request} /></TabsContent>
+                <TabsContent value="response">{f.evidence.response ? <Evidence text={f.evidence.response} /> : <Empty>No response captured.</Empty>}</TabsContent>
+              </Tabs>
+            ) : f.evidence.response ? (
+              // Backend scanners store a single evidence block, not a request/response pair.
+              <>
+                <p className="mb-2 text-xs text-muted-foreground">Scanner output (no raw HTTP request was captured)</p>
+                <Evidence text={f.evidence.response} />
+              </>
+            ) : (
+              <Empty>No evidence was captured for this finding.</Empty>
+            )}
+          </Panel>
+          <Panel title="Business impact" action={<Briefcase className="size-4 text-muted-foreground" />}>
+            {f.businessImpact ? (
+              <p className="text-sm leading-relaxed text-foreground/90">{f.businessImpact}</p>
+            ) : (
+              <Empty>Not assessed yet. Business impact comes from a completed AI analysis of this assessment.</Empty>
+            )}
+          </Panel>
           <Panel title="Remediation" action={<Wrench className="size-4 text-muted-foreground" />}>
-            <ol className="space-y-3">
-              {f.remediation.map((r, i) => (
-                <li key={i} className="flex gap-3 text-sm text-foreground/90"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />{r}</li>
-              ))}
-            </ol>
+            {f.remediation.length > 0 ? (
+              <ol className="space-y-3">
+                {f.remediation.map((r, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-foreground/90"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />{r}</li>
+                ))}
+              </ol>
+            ) : (
+              <Empty>No remediation guidance was provided for this finding.</Empty>
+            )}
           </Panel>
         </div>
         <Panel title="Details" className="h-fit">
           <dl className="space-y-3 text-sm">
             {[
-              ["CVSS score", <span className="font-mono">{f.cvss.toFixed(1)}</span>],
-              ["CWE", <span className="font-mono">{f.cwe}</span>],
+              ["CVSS score", fmtCvss(f.cvss) ? <span className="font-mono">{fmtCvss(f.cvss)}</span> : <Unavailable label="Not reported" reason="The scanner did not report a CVSS score" />],
+              ["CWE", f.cwe ? <span className="font-mono">{f.cwe}</span> : <Unavailable label="Not reported" />],
               ["Category", f.category],
               ["Scanner", f.scanner],
               ["Status", <span className="capitalize">{f.status}</span>],

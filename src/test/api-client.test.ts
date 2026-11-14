@@ -97,7 +97,7 @@ describe("service layer paths", () => {
       "/api/v1/assessments",
       "/api/v1/assessments/s1",
       "/api/v1/findings",
-      "/api/v1/findings/f1",
+      "/api/v1/findings/f1/detail",
       "/api/v1/reports",
       "/api/v1/assessments",
       "/api/v1/analyst/chat",

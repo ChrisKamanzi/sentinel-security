@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { apiFetch, apiUrl, isDemoMode } from "./client";
+import { ApiError, apiFetch, apiUrl, isDemoMode } from "./client";
 import { demoAssessments, demoFindings, demoReports, demoSummary, stageTemplate } from "./demo-data";
 import type { Assessment, ChatMessage, DashboardSummary, Finding, NewAssessmentInput, Report, ScanDetail } from "./types";
 
@@ -62,9 +62,19 @@ export const api = {
   /** GET /findings */
   listFindings: (): Promise<Finding[]> => (isDemoMode ? delay(demoFindings) : apiFetch("/findings")),
 
-  /** GET /findings/{id} */
+  /**
+   * GET /findings/{id}/detail. (The backend's GET /findings/{id} is its older
+   * snake_case API.) Unknown or malformed IDs resolve to null, i.e. "not found".
+   */
   getFinding: async (id: string): Promise<Finding | null> => {
-    if (!isDemoMode) return apiFetch(`/findings/${id}`);
+    if (!isDemoMode) {
+      try {
+        return await apiFetch<Finding>(`/findings/${encodeURIComponent(id)}/detail`);
+      } catch (e) {
+        if (e instanceof ApiError && (e.status === 404 || e.status === 422)) return null;
+        throw e;
+      }
+    }
     return delay(demoFindings.find((f) => f.id === id) ?? null);
   },
 
