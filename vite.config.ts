@@ -15,4 +15,16 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    server: {
+      // Dev only: forward API calls to the local FastAPI backend so the browser stays
+      // same-origin (no CORS). Used when VITE_API_BASE_URL=/api/v1; see .env.example.
+      proxy: {
+        "/api/v1": {
+          target: process.env["API_PROXY_TARGET"] || "http://127.0.0.1:8001",
+          changeOrigin: true,
+        },
+      },
+    },
+  },
 });

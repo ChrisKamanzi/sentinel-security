@@ -27,12 +27,23 @@ export function SeverityBadge({ severity, className }: { severity: Severity; cla
 const statusClass: Record<ScanStatus, string> = {
   running: "bg-primary/15 text-primary border-primary/30",
   completed: "bg-success/15 text-success border-success/30",
+  // Some scanners completed, others failed: neither a success nor a total failure.
+  partial: "bg-sev-medium/15 text-sev-medium border-sev-medium/30",
   queued: "bg-muted text-muted-foreground border-border",
   failed: "bg-destructive/15 text-destructive border-destructive/30",
 };
+const statusTitle: Partial<Record<ScanStatus, string>> = {
+  partial: "Some scanners completed, others failed",
+};
 export function StatusBadge({ status }: { status: ScanStatus }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium capitalize", statusClass[status])}>
+    <span
+      title={statusTitle[status]}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium capitalize",
+        statusClass[status] ?? statusClass.queued,
+      )}
+    >
       {status === "running" && <span className="size-1.5 animate-pulse rounded-full bg-primary" />}
       {status}
     </span>
@@ -93,6 +104,15 @@ export function RiskGauge({ score }: { score: number }) {
         <span className="text-xs font-medium" style={{ color }}>{label} risk</span>
       </div>
     </div>
+  );
+}
+
+/** Placeholder for a value the backend did not provide; `reason` explains why on hover. */
+export function Unavailable({ label = "—", reason }: { label?: string; reason?: string }) {
+  return (
+    <span className="text-muted-foreground" title={reason}>
+      {label}
+    </span>
   );
 }
 

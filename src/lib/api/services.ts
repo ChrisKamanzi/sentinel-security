@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
-import { apiFetch, isDemoMode } from "./client";
+import { ApiError, apiFetch, apiUrl, isDemoMode } from "./client";
 import { demoAssessments, demoFindings, demoReports, demoSummary, stageTemplate } from "./demo-data";
-import type { Assessment, ChatMessage, DashboardSummary, Finding, NewAssessmentInput, Report, ScanDetail } from "./types";
+import type { Assessment, ChatMessage, DashboardSummary, Finding, NewAssessmentInput, Report, ScanAnalysis, ScanDetail } from "./types";
 
 /*
  * Service layer for the FastAPI backend. Each function maps to one endpoint.
@@ -18,25 +18,25 @@ function demoProgress(a: Assessment): Assessment {
 }
 
 export const api = {
-  /** GET /api/dashboard/summary */
+  /** GET /dashboard/summary */
   getDashboard: (): Promise<DashboardSummary> =>
-    isDemoMode ? delay(demoSummary) : apiFetch("/api/dashboard/summary"),
+    isDemoMode ? delay(demoSummary) : apiFetch("/dashboard/summary"),
 
-  /** GET /api/assessments */
+  /** GET /assessments */
   listAssessments: (): Promise<Assessment[]> =>
-    isDemoMode ? delay(demoAssessments.map(demoProgress)) : apiFetch("/api/assessments"),
+    isDemoMode ? delay(demoAssessments.map(demoProgress)) : apiFetch("/assessments"),
 
-  /** POST /api/assessments */
+  /** POST /assessments */
   createAssessment: (input: NewAssessmentInput): Promise<Assessment> => {
     if (!input.authorized) return Promise.reject(new Error("Authorization confirmation is required"));
     return isDemoMode
       ? delay({ ...demoAssessments[0]!, name: input.name, target: input.target }, 600)
-      : apiFetch("/api/assessments", { method: "POST", body: JSON.stringify(input) });
+      : apiFetch("/assessments", { method: "POST", body: JSON.stringify(input) });
   },
 
-  /** GET /api/assessments/{id} — poll for real-time progress */
+  /** GET /assessments/{id} — poll for real-time progress */
   getScan: async (id: string): Promise<ScanDetail> => {
-    if (!isDemoMode) return apiFetch(`/api/assessments/${id}`);
+    if (!isDemoMode) return apiFetch(`/assessments/${id}`);
     const base = demoAssessments.find((a) => a.id === id) ?? demoAssessments[0]!;
     const a = demoProgress(base);
     const per = 100 / stageTemplate.length;
@@ -59,24 +59,61 @@ export const api = {
     }, 150);
   },
 
-  /** GET /api/findings */
-  listFindings: (): Promise<Finding[]> => (isDemoMode ? delay(demoFindings) : apiFetch("/api/findings")),
+  /** GET /findings */
+  listFindings: (): Promise<Finding[]> => (isDemoMode ? delay(demoFindings) : apiFetch("/findings")),
 
-  /** GET /api/findings/{id} */
+  /**
+   * GET /findings/{id}/detail. (The backend's GET /findings/{id} is its older
+   * snake_case API.) Unknown or malformed IDs resolve to null, i.e. "not found".
+   */
   getFinding: async (id: string): Promise<Finding | null> => {
-    if (!isDemoMode) return apiFetch(`/api/findings/${id}`);
+    if (!isDemoMode) {
+      try {
+        return await apiFetch<Finding>(`/findings/${encodeURIComponent(id)}/detail`);
+      } catch (e) {
+        if (e instanceof ApiError && (e.status === 404 || e.status === 422)) return null;
+        throw e;
+      }
+    }
     return delay(demoFindings.find((f) => f.id === id) ?? null);
   },
 
-  /** GET /api/reports */
-  listReports: (): Promise<Report[]> => (isDemoMode ? delay(demoReports) : apiFetch("/api/reports")),
+  /** GET /reports */
+  listReports: (): Promise<Report[]> => (isDemoMode ? delay(demoReports) : apiFetch("/reports")),
 
-  /** URL for GET /api/reports/{id}/download */
-  reportDownloadUrl: (id: string) => (isDemoMode ? null : `${import.meta.env["VITE_API_BASE_URL"]}/api/reports/${id}/download`),
+  /** URL for GET /reports/{id}/download */
+  reportDownloadUrl: (id: string) => (isDemoMode ? null : apiUrl(`/reports/${id}/download`)),
 
-  /** POST /api/analyst/chat */
-  askAnalyst: async (messages: ChatMessage[], findingId?: string): Promise<ChatMessage> => {
-    if (!isDemoMode) return apiFetch("/api/analyst/chat", { method: "POST", body: JSON.stringify({ messages, finding_id: findingId }) });
+  /**
+   * Latest AI analysis of an assessment (any status): GET /scans/{id}/analysis.
+   * Resolves to null when the assessment has never been analyzed.
+   */
+  getScanAnalysis: async (scanId: string): Promise<ScanAnalysis | null> => {
+    if (isDemoMode) return null;
+    try {
+      return await apiFetch<ScanAnalysis>(`/scans/${encodeURIComponent(scanId)}/analysis`);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return null;
+      throw e;
+    }
+  },
+
+  /**
+   * Queue a new AI analysis: POST /scans/{id}/analysis (202). Sends the scan's
+   * redacted findings to Anthropic and uses API credits. The backend answers
+   * 409 while the scan runs, when it has no findings, or when a run is active.
+   */
+  startScanAnalysis: (scanId: string): Promise<ScanAnalysis> =>
+    isDemoMode
+      ? Promise.reject(new Error("AI analysis needs the FastAPI backend"))
+      : apiFetch(`/scans/${encodeURIComponent(scanId)}/analysis`, { method: "POST" }),
+
+  /**
+   * Demo-mode chat only. The FastAPI backend has no chat endpoint; with a
+   * backend the analyst page uses getScanAnalysis/startScanAnalysis instead.
+   */
+  askAnalyst: async (messages: ChatMessage[], _findingId?: string): Promise<ChatMessage> => {
+    if (!isDemoMode) throw new Error("Chat is only available in demo mode; use the per-assessment AI analysis");
     const q = messages[messages.length - 1]?.content.toLowerCase() ?? "";
     let content =
       "In your latest assessments, the two critical issues are **SQL injection in transaction search** (VULN-2201) and **broken object-level authorization on accounts** (VULN-2202). Both affect the Payments API and allow access to other customers' data. I'd fix VULN-2202 first — it's trivially exploitable by any logged-in user.";
@@ -92,3 +129,5 @@ export const assessmentsQuery = queryOptions({ queryKey: ["assessments"], queryF
 export const findingsQuery = queryOptions({ queryKey: ["findings"], queryFn: api.listFindings });
 export const findingQuery = (id: string) => queryOptions({ queryKey: ["finding", id], queryFn: () => api.getFinding(id) });
 export const reportsQuery = queryOptions({ queryKey: ["reports"], queryFn: api.listReports });
+export const scanAnalysisQuery = (scanId: string) =>
+  queryOptions({ queryKey: ["analysis", scanId], queryFn: () => api.getScanAnalysis(scanId) });

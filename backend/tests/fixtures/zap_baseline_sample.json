@@ -1,0 +1,313 @@
+{
+ "@programName": "ZAP",
+ "@version": "2.16.1",
+ "@generated": "Sat, 14 Nov 2026 08:00:00",
+ "site": [
+  {
+   "@name": "http://127.0.0.1:8000",
+   "@host": "127.0.0.1",
+   "@port": "8000",
+   "@ssl": "false",
+   "alerts": [
+    {
+     "pluginid": "10038",
+     "alertRef": "10038-1",
+     "alert": "Content Security Policy (CSP) Header Not Set",
+     "name": "Content Security Policy (CSP) Header Not Set",
+     "riskcode": "2",
+     "confidence": "3",
+     "riskdesc": "Medium (High)",
+     "desc": "<p>Content Security Policy (CSP) is an added layer of security &amp; helps detect attacks.</p>",
+     "instances": [
+      {
+       "uri": "http://127.0.0.1:8000/",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/ftp",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://evil.example/",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p0",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p1",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p2",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p3",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p4",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p5",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p6",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p7",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p8",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p9",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p10",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      },
+      {
+       "uri": "http://127.0.0.1:8000/p11",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      }
+     ],
+     "count": "15",
+     "solution": "<p>Ensure that your web server sets the Content-Security-Policy header.</p>",
+     "otherinfo": "",
+     "reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP</p><p>https://owasp.org/www-project-cheat-sheets/</p>",
+     "cweid": "693",
+     "wascid": "15",
+     "sourceid": "3"
+    },
+    {
+     "pluginid": "10098",
+     "alertRef": "10098",
+     "alert": "Cross-Domain Misconfiguration",
+     "riskcode": "2",
+     "confidence": "2",
+     "riskdesc": "Medium (Medium)",
+     "desc": "<p>Web browser data loading may be possible due to a CORS misconfiguration.</p>",
+     "instances": [
+      {
+       "uri": "http://127.0.0.1:8000/rest/products",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "Access-Control-Allow-Origin: *",
+       "otherinfo": ""
+      }
+     ],
+     "count": "1",
+     "solution": "<p>Restrict Access-Control-Allow-Origin.</p>",
+     "reference": "<p>https://cwe.mitre.org/data/definitions/264.html</p>",
+     "cweid": "264",
+     "wascid": "14",
+     "sourceid": "3"
+    },
+    {
+     "pluginid": "10054",
+     "alertRef": "10054-1",
+     "alert": "Cookie without SameSite Attribute",
+     "riskcode": "1",
+     "confidence": "2",
+     "riskdesc": "Low (Medium)",
+     "desc": "<p>A cookie has been set without the SameSite attribute.</p>",
+     "instances": [
+      {
+       "uri": "http://127.0.0.1:8000/rest/user/login",
+       "method": "GET",
+       "param": "token",
+       "attack": "",
+       "evidence": "Set-Cookie: token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abcDEF123",
+       "otherinfo": ""
+      }
+     ],
+     "count": "1",
+     "solution": "<p>Set SameSite to Lax or Strict.</p>",
+     "reference": "",
+     "cweid": "1275",
+     "wascid": "13",
+     "sourceid": "3"
+    },
+    {
+     "pluginid": "10096",
+     "alertRef": "10096",
+     "alert": "Timestamp Disclosure - Unix",
+     "riskcode": "0",
+     "confidence": "1",
+     "riskdesc": "Informational (Low)",
+     "desc": "<p>A timestamp was disclosed.</p>",
+     "instances": [
+      {
+       "uri": "http://127.0.0.1:8000/main.js",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "1650485437",
+       "otherinfo": ""
+      }
+     ],
+     "count": "1",
+     "solution": "",
+     "reference": "",
+     "cweid": "-1",
+     "wascid": "13",
+     "sourceid": "3",
+     "otherinfo": "<p>1650485437, which evaluates to: 2022-04-20</p>"
+    },
+    {
+     "pluginid": "10027",
+     "alertRef": "10027",
+     "alert": "Information Disclosure - Suspicious Comments",
+     "riskcode": "0",
+     "confidence": "0",
+     "riskdesc": "Informational (False Positive)",
+     "desc": "<p>Comments.</p>",
+     "instances": [
+      {
+       "uri": "http://127.0.0.1:8000/main.js",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "TODO",
+       "otherinfo": ""
+      }
+     ],
+     "count": "1",
+     "solution": "",
+     "reference": "",
+     "cweid": "615",
+     "wascid": "13",
+     "sourceid": "3"
+    },
+    {
+     "pluginid": "10020",
+     "alertRef": "10020-1",
+     "alert": "Missing Anti-clickjacking Header",
+     "riskcode": "2",
+     "confidence": "2",
+     "riskdesc": "Medium (Medium)",
+     "desc": "<p>Only off-host instances.</p>",
+     "instances": [
+      {
+       "uri": "http://evil.example/frame",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      }
+     ],
+     "count": "1",
+     "solution": "",
+     "reference": "",
+     "cweid": "1021",
+     "wascid": "15",
+     "sourceid": "3"
+    }
+   ]
+  },
+  {
+   "@name": "http://evil.example",
+   "@host": "evil.example",
+   "@port": "80",
+   "@ssl": "false",
+   "alerts": [
+    {
+     "pluginid": "10038",
+     "alertRef": "10038-1",
+     "alert": "Content Security Policy (CSP) Header Not Set",
+     "riskcode": "2",
+     "confidence": "3",
+     "riskdesc": "Medium (High)",
+     "desc": "<p>x</p>",
+     "instances": [
+      {
+       "uri": "http://evil.example/",
+       "method": "GET",
+       "param": "",
+       "attack": "",
+       "evidence": "",
+       "otherinfo": ""
+      }
+     ],
+     "count": "1",
+     "solution": "",
+     "reference": "",
+     "cweid": "693",
+     "wascid": "15",
+     "sourceid": "3"
+    }
+   ]
+  }
+ ]
+}

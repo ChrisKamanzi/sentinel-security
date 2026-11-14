@@ -1,11 +1,30 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Circle, Loader2, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Circle, CircleSlash, Loader2, ArrowLeft, XCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api/services";
-import { PageHeader, Panel, SEVERITIES, StatusBadge, fmtDate, sevDot } from "@/components/app/ui";
+import type { ScanStatus, StageStatus } from "@/lib/api/types";
+import { PageHeader, Panel, SEVERITIES, StatusBadge, Unavailable, fmtDate, sevDot } from "@/components/app/ui";
 import { cn } from "@/lib/utils";
+
+/** Statuses that can still change, so the page keeps polling. */
+const ACTIVE: ScanStatus[] = ["queued", "running"];
+
+function StageIcon({ status }: { status: StageStatus }) {
+  switch (status) {
+    case "done":
+      return <CheckCircle2 className="size-5 shrink-0 text-success" />;
+    case "running":
+      return <Loader2 className="size-5 shrink-0 animate-spin text-primary" />;
+    case "failed":
+      return <XCircle className="size-5 shrink-0 text-destructive" aria-label="failed" />;
+    case "skipped":
+      return <CircleSlash className="size-5 shrink-0 text-muted-foreground" aria-label="skipped" />;
+    default:
+      return <Circle className="size-5 shrink-0 text-muted-foreground/50" />;
+  }
+}
 
 export const Route = createFileRoute("/scans/$scanId")({
   head: ({ params }) => ({
@@ -21,11 +40,11 @@ export const Route = createFileRoute("/scans/$scanId")({
 
 function ScanDetails() {
   const { scanId } = Route.useParams();
-  // Polls the backend for live progress while the scan runs.
+  // Polls the backend while the scan is queued or running.
   const { data: scan } = useQuery({
     queryKey: ["scan", scanId],
     queryFn: () => api.getScan(scanId),
-    refetchInterval: (q) => (q.state.data?.status === "running" ? 2000 : false),
+    refetchInterval: (q) => (q.state.data && ACTIVE.includes(q.state.data.status) ? 2000 : false),
   });
 
   if (!scan) return <div className="space-y-4"><Skeleton className="h-10 w-72" /><Skeleton className="h-40" /><Skeleton className="h-80" /></div>;
@@ -42,8 +61,14 @@ function ScanDetails() {
         </div>
         <Progress value={scan.progress} className="mt-4 h-2" />
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Metric label="Requests sent" value={scan.requestsSent.toLocaleString()} />
-          <Metric label="Endpoints found" value={scan.endpointsDiscovered} />
+          <Metric
+            label="Requests sent"
+            value={scan.requestsSent == null ? <Unavailable label="Not tracked" reason="The backend does not count requests" /> : scan.requestsSent.toLocaleString()}
+          />
+          <Metric
+            label="Endpoints found"
+            value={scan.endpointsDiscovered == null ? <Unavailable reason="No discovery scanner has reported yet" /> : scan.endpointsDiscovered}
+          />
           <Metric label="Findings" value={SEVERITIES.reduce((n, k) => n + scan.findings[k], 0)} />
           <Metric label="Risk score" value={scan.riskScore || "—"} />
         </div>
@@ -55,13 +80,14 @@ function ScanDetails() {
             {scan.stages.map((st, i) => (
               <li key={st.key} className="relative flex gap-3 pb-4">
                 {i < scan.stages.length - 1 && <span className={cn("absolute left-[9px] top-6 h-[calc(100%-16px)] w-px", st.status === "done" ? "bg-success/50" : "bg-border")} />}
-                {st.status === "done" ? <CheckCircle2 className="size-5 shrink-0 text-success" /> : st.status === "running" ? <Loader2 className="size-5 shrink-0 animate-spin text-primary" /> : <Circle className="size-5 shrink-0 text-muted-foreground/50" />}
+                <StageIcon status={st.status} />
                 <div>
-                  <div className={cn("text-sm font-medium", st.status === "pending" ? "text-muted-foreground" : "text-foreground")}>{st.label}</div>
+                  <div className={cn("text-sm font-medium", st.status === "pending" || st.status === "skipped" ? "text-muted-foreground" : st.status === "failed" ? "text-destructive" : "text-foreground")}>{st.label}</div>
                   <div className="text-xs text-muted-foreground">{st.description}</div>
                 </div>
               </li>
             ))}
+            {scan.stages.length === 0 && <li className="text-sm text-muted-foreground">{scan.status === "queued" ? "Waiting for scanners to start." : "No scanner stages recorded."}</li>}
           </ol>
         </Panel>
 

@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { findingsQuery } from "@/lib/api/services";
 import type { Severity } from "@/lib/api/types";
-import { PageHeader, SEVERITIES, SeverityBadge, fmtDate } from "@/components/app/ui";
+import { PageHeader, SEVERITIES, SeverityBadge, Unavailable, fmtDate } from "@/components/app/ui";
+import { fmtCvss } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/vulnerabilities/")({
@@ -36,7 +37,8 @@ function Vulnerabilities() {
   const rows = useMemo(
     () => data
       .filter((f) => (sev === "all" || f.severity === sev) && (cat === "all" || f.category === cat) && (scanner === "all" || f.scanner === scanner) && (`${f.title} ${f.id} ${f.endpoint}`.toLowerCase().includes(q.toLowerCase())))
-      .sort((a, b) => sevRank[a.severity] - sevRank[b.severity] || b.cvss - a.cvss),
+      // Within a severity, highest CVSS first; findings without a CVSS score sort last.
+      .sort((a, b) => sevRank[a.severity] - sevRank[b.severity] || (b.cvss ?? -1) - (a.cvss ?? -1)),
     [data, q, sev, cat, scanner],
   );
 
@@ -80,11 +82,11 @@ function Vulnerabilities() {
                 <td className="px-4 py-3"><SeverityBadge severity={f.severity} /></td>
                 <td className="py-3 pr-4">
                   <Link to="/vulnerabilities/$findingId" params={{ findingId: f.id }} className="font-medium text-foreground hover:text-primary">{f.title}</Link>
-                  <div className="font-mono text-xs text-muted-foreground">{f.id} · {f.endpoint}</div>
+                  <div className="font-mono text-xs text-muted-foreground">{f.endpoint ? `${f.id} · ${f.endpoint}` : f.id}</div>
                 </td>
                 <td className="text-muted-foreground">{f.category}</td>
                 <td className="text-muted-foreground">{f.scanner}</td>
-                <td className="font-mono text-foreground">{f.cvss.toFixed(1)}</td>
+                <td className="font-mono text-foreground">{fmtCvss(f.cvss) ?? <Unavailable reason="Not reported by the scanner" />}</td>
                 <td><span className="rounded bg-muted px-2 py-0.5 text-xs capitalize text-muted-foreground">{f.status}</span></td>
                 <td className="px-4 text-right text-xs text-muted-foreground">{fmtDate(f.discoveredAt)}</td>
               </tr>

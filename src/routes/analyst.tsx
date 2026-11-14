@@ -4,12 +4,19 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowUp, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { isDemoMode } from "@/lib/api/client";
 import { api } from "@/lib/api/services";
 import type { ChatMessage } from "@/lib/api/types";
 import { PageHeader } from "@/components/app/ui";
+import { ScanAnalysisView } from "@/components/app/ScanAnalysis";
+
+type AnalystSearch = { finding?: string | undefined; scan?: string | undefined };
 
 export const Route = createFileRoute("/analyst")({
-  validateSearch: (s: Record<string, unknown>): { finding?: string | undefined } => ({ finding: typeof s["finding"] === "string" ? s["finding"] : undefined }),
+  validateSearch: (s: Record<string, unknown>): AnalystSearch => ({
+    finding: typeof s["finding"] === "string" ? s["finding"] : undefined,
+    scan: typeof s["scan"] === "string" ? s["scan"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "AI Security Analyst — AutoPentest AI" },
@@ -42,6 +49,30 @@ function Rich({ text }: { text: string }) {
 }
 
 function Analyst() {
+  return isDemoMode ? <DemoChat /> : <LiveAnalyst />;
+}
+
+/** With the FastAPI backend: per-assessment analysis via /scans/{id}/analysis. */
+function LiveAnalyst() {
+  const { finding, scan } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  return (
+    <>
+      <PageHeader
+        title="AI Security Analyst"
+        description="Claude reviews an assessment's findings and returns a prioritized, evidence-based analysis."
+      />
+      <ScanAnalysisView
+        scanId={scan}
+        findingId={finding}
+        onSelectScan={(id) => navigate({ search: { scan: id }, replace: true })}
+      />
+    </>
+  );
+}
+
+/** Demo mode only: canned answers about the bundled demo data. */
+function DemoChat() {
   const { finding } = Route.useSearch();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(finding ? `Explain finding ${finding} and how to fix it` : "");
